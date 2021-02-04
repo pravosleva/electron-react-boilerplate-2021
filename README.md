@@ -1,18 +1,25 @@
 # electron-react-boilerplate-2021
 
+> **[electron-quick-start app](https://github.com/electron/electron-quick-start)** based. Thanx to contributors!
+
 ### `yarn install-all`
+
 Electron side deps will be installed then frontend side deps will be installed.
 
 ### `yarn dev`
+
 You can use hot reload dev mode for frontend react app in this electron app. Electron app BrowserWindow will be created when `http://localhost:3000` will be available.
 
 ### `yarn fresh-prod-start`
+
 Fresh frontend will be built to `frontend/build` then will be used.
 
 ### `yarn start`
+
 Old build will be used in `frontend/build`.
 
 ### `yarn dist`
+
 You can run `$ yarn dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)) or `$ yarn pack` (only generates the package directory without really packaging it. This is useful for testing purposes). See also [electron-builder](https://www.electron.build/). **Note!** to build rpm, executable rpmbuild is required, please install: `$ sudo apt-get install rpm`
 
 See result in `/release`.
@@ -44,30 +51,34 @@ To ensure your native dependencies are always matched with electron version, sim
 - Add to `fontend/package.json` scripts: `"dev": "BROWSER=none react-scripts start",`
 - Add to `package.json` scripts: `"dev": "concurrently --kill-others \"yarn frontend-dev\" \"NODE_ENV=development electron .\"",`
 - Add changes to `main.js`:
+
 ```javascript
-const dev = process.env.NODE_ENV === 'development';
+const dev = process.env.NODE_ENV === 'development'
 
 // ...
-function createWindow () {
+function createWindow() {
   // ...
   if (!dev) {
-    mainWindow.loadFile('./frontend/build/index.html');
+    mainWindow.loadFile('./frontend/build/index.html')
   } else {
-    mainWindow.loadURL('http://localhost:3535');
+    mainWindow.loadURL('http://localhost:3535')
   }
   // ...
 }
 ```
+
 - Add file `polling-to-frontend.js` to have ability to check if `http://localhost:3535` available.
 - Add code to `main.js` _(WAY 1 should be replaced to WAY 2)_.
+
 ```javascript
-const createPollingByConditions = require('./polling-to-frontend').createPollingByConditions;
+const createPollingByConditions = require('./polling-to-frontend')
+  .createPollingByConditions
 const CONFIG = {
   FRONTEND_DEV_URL: 'http://localhost:3535',
   FRONTEND_FIRST_CONNECT_INTERVAL: 4000,
-  FRONTERN_FIRST_CONNECT_METHOD: 'get'
-};
-let connectedToFrontend = false;
+  FRONTERN_FIRST_CONNECT_METHOD: 'get',
+}
+let connectedToFrontend = false
 
 // WAY 1: Without checking conditions.
 // This method will be called when Electron has finished
@@ -79,27 +90,32 @@ let connectedToFrontend = false;
 // I'm gonna check if CONFIG.FRONTEND_DEV_URL resource available then create window...
 app.on('ready', () => {
   if (dev) {
-    createPollingByConditions ({
+    createPollingByConditions({
       url: CONFIG.FRONTEND_DEV_URL,
       method: CONFIG.FRONTERN_FIRST_CONNECT_METHOD,
       interval: CONFIG.FRONTEND_FIRST_CONNECT_INTERVAL,
       callbackAsResolve: () => {
-        console.log(`SUCCESS! CONNECTED TO ${CONFIG.FRONTEND_DEV_URL}`);
-        connectedToFrontend = true;
+        console.log(`SUCCESS! CONNECTED TO ${CONFIG.FRONTEND_DEV_URL}`)
+        connectedToFrontend = true
 
-        createWindow();
+        createWindow()
       },
       toBeOrNotToBe: () => !connectedToFrontend, // Need to reconnect again
       callbackAsReject: () => {
-        console.log(`FUCKUP! ${CONFIG.FRONTEND_DEV_URL} IS NOT AVAILABLE YET!`);
-        console.log(`TRYING TO RECONNECT in ${CONFIG.FRONTEND_FIRST_CONNECT_INTERVAL / 1000} seconds...`);
-      }
-    });
+        console.log(`FUCKUP! ${CONFIG.FRONTEND_DEV_URL} IS NOT AVAILABLE YET!`)
+        console.log(
+          `TRYING TO RECONNECT in ${
+            CONFIG.FRONTEND_FIRST_CONNECT_INTERVAL / 1000
+          } seconds...`
+        )
+      },
+    })
   } else {
-    createWindow();
+    createWindow()
   }
-});
+})
 ```
+
 - Remove `renderer.js` and `index.html` from main directory.
 
 **STEP 3:** Add some scripts to `package.json` if necessary.
