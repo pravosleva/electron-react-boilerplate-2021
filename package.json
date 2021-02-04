@@ -1,12 +1,43 @@
 {
-  "name": "electron-quick-start",
+  "name": "electron-react-boilerplate-2021",
   "version": "1.0.0",
   "description": "A minimal Electron application",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "install-all": "yarn install && yarn --cwd ./frontend install",
+    "build-client": "yarn --cwd ./frontend build",
+    "dev": "concurrently --kill-others \"yarn frontend-dev\" \"NODE_ENV=development electron .\"",
+    "frontend-dev": "yarn --cwd ./frontend dev",
+    "dist": "electron-builder",
+    "fresh-prod-start": "yarn build-client && NODE_ENV=production yarn start",
+    "start": "NODE_ENV=production electron ."
   },
-  "repository": "https://github.com/electron/electron-quick-start",
+  "build": {
+    "productName": "Electron React Boilerplate 2021",
+    "appId": "your.id",
+    "mac": {
+      "category": "your.app.category.type"
+    },
+    "linux": {
+      "target": [
+        "deb",
+        "rpm",
+        "snap",
+        "AppImage"
+      ],
+      "category": "Development"
+    },
+    "directories": {
+      "buildResources": "resources",
+      "output": "release"
+    }
+  },
+  "repository": "https://github.com/pravosleva/electron-react-boilerplate-2021",
+  "author": {
+    "name": "Den Pol",
+    "email": "selection4test@gmail.com",
+    "url": "https://github.com/pravosleva/electron-react-boilerplate-2021"
+  },
   "keywords": [
     "Electron",
     "quick",
@@ -14,9 +45,13 @@
     "tutorial",
     "demo"
   ],
-  "author": "GitHub",
   "license": "CC0-1.0",
   "devDependencies": {
-    "electron": "^11.2.2"
+    "concurrently": "^5.3.0",
+    "electron": "^11.2.2",
+    "electron-builder": "^22.9.1"
+  },
+  "dependencies": {
+    "axios": "^0.21.1"
   }
 }

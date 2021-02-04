@@ -2,6 +2,17 @@
 const {app, BrowserWindow} = require('electron')
 const path = require('path')
 
+// --- Adds
+const isDev = process.env.NODE_ENV === 'development';
+const createPollingByConditions = require('./polling-to-frontend').createPollingByConditions;
+const CONFIG = {
+  FRONTEND_DEV_URL: 'http://localhost:3535',
+  FRONTEND_FIRST_CONNECT_INTERVAL: 4000,
+  FRONTERN_FIRST_CONNECT_METHOD: 'get'
+};
+let connectedToFrontend = false;
+// ---
+
 function createWindow () {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -13,7 +24,13 @@ function createWindow () {
   })
 
   // and load the index.html of the app.
-  mainWindow.loadFile('index.html')
+  // mainWindow.loadFile('index.html')
+  if (!isDev) {
+    mainWindow.loadFile('./frontend/build/index.html');
+  } else {
+    mainWindow.loadURL(CONFIG.FRONTEND_DEV_URL);
+    mainWindow.webContents.openDevTools();
+  }
 
   // Open the DevTools.
   // mainWindow.webContents.openDevTools()
@@ -23,7 +40,30 @@ function createWindow () {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  createWindow()
+  // WAY 1:
+  // createWindow()
+  // ---
+  // WAY 2:
+  if (isDev) {
+    createPollingByConditions ({
+      url: CONFIG.FRONTEND_DEV_URL,
+      method: CONFIG.FRONTERN_FIRST_CONNECT_METHOD,
+      interval: CONFIG.FRONTEND_FIRST_CONNECT_INTERVAL,
+      callbackAsResolve: () => {
+        console.log(`SUCCESS! CONNECTED TO ${CONFIG.FRONTEND_DEV_URL}`);
+        connectedToFrontend = true;
+        createWindow();
+      },
+      toBeOrNotToBe: () => !connectedToFrontend, // Need to reconnect again
+      callbackAsReject: () => {
+        console.log(`FUCKUP! ${CONFIG.FRONTEND_DEV_URL} IS NOT AVAILABLE YET!`);
+        console.log(`TRYING TO RECONNECT in ${CONFIG.FRONTEND_FIRST_CONNECT_INTERVAL / 1000} seconds...`);
+      }
+    });
+  } else {
+    createWindow();
+  }
+  // ---
   
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the

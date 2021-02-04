@@ -1,45 +1,105 @@
-# electron-quick-start
+# electron-react-boilerplate-2021
 
-**Clone and run for a quick way to see Electron in action.**
+### `yarn install-all`
+Electron side deps will be installed then frontend side deps will be installed.
 
-This is a minimal Electron application based on the [Quick Start Guide](https://electronjs.org/docs/tutorial/quick-start) within the Electron documentation.
+### `yarn dev`
+You can use hot reload dev mode for frontend react app in this electron app. Electron app BrowserWindow will be created when `http://localhost:3000` will be available.
 
-**Use this app along with the [Electron API Demos](https://electronjs.org/#get-started) app for API code examples to help you get started.**
+### `yarn fresh-prod-start`
+Fresh frontend will be built to `frontend/build` then will be used.
 
-A basic Electron application needs just these files:
+### `yarn start`
+Old build will be used in `frontend/build`.
 
-- `package.json` - Points to the app's main file and lists its details and dependencies.
-- `main.js` - Starts the app and creates a browser window to render HTML. This is the app's **main process**.
-- `index.html` - A web page to render. This is the app's **renderer process**.
+### `yarn dist`
+You can run `$ yarn dist` (to package in a distributable format (e.g. dmg, windows installer, deb package)) or `$ yarn pack` (only generates the package directory without really packaging it. This is useful for testing purposes). See also [electron-builder](https://www.electron.build/). **Note!** to build rpm, executable rpmbuild is required, please install: `$ sudo apt-get install rpm`
 
-You can learn more about each of these components within the [Quick Start Guide](https://electronjs.org/docs/tutorial/quick-start).
+See result in `/release`.
 
-## To Use
+To ensure your native dependencies are always matched with electron version, simply add script `"postinstall": "electron-builder install-app-deps"` to your `package.json`.
 
-To clone and run this repository you'll need [Git](https://git-scm.com) and [Node.js](https://nodejs.org/en/download/) (which comes with [npm](http://npmjs.com)) installed on your computer. From your command line:
+## How to make fresh CRA project
 
-```bash
-# Clone this repository
-git clone https://github.com/electron/electron-quick-start
-# Go into the repository
-cd electron-quick-start
-# Install dependencies
-npm install
-# Run the app
-npm start
+- `$ rm -rf ./frontend`
+- `$ create-react-app frontend`
+- Needs edits in `package.json` like this: `"dev": "BROWSER=none react-scripts start"`
+- Add `"homepage": "./"` to `./frontend/package.json` for have relative paths in `./frontend/build/index.html`
+- `./frontend/.env` with `SKIP_PREFLIGHT_CHECK=true` if necessary.
+
+## How this repository was created
+
+**STEP 1:** [electron-quick-start](https://github.com/electron/electron-quick-start)
+
+- Clone the Quick Start repository `$ git clone https://github.com/electron/electron-quick-start`
+- Go into the repository `$ cd electron-quick-start`
+- Install the dependencies `$ npm install` (and run `npm start`)
+
+**STEP 2:** [create-react-app](https://github.com/facebook/create-react-app)
+
+- `$ create-react-app frontend && cd frontend`
+- Add `"homepage": "./"` to `frontend/package.json` for have relative paths in `./frontend/build/index.html`
+- Replace `mainWindow.loadFile('./index.html')` with `mainWindow.loadFile('./frontend/build/index.html')` in `main.js`
+- Comment out everything in `preload.js`
+- Add to `fontend/package.json` scripts: `"dev": "BROWSER=none react-scripts start",`
+- Add to `package.json` scripts: `"dev": "concurrently --kill-others \"yarn frontend-dev\" \"NODE_ENV=development electron .\"",`
+- Add changes to `main.js`:
+```javascript
+const dev = process.env.NODE_ENV === 'development';
+
+// ...
+function createWindow () {
+  // ...
+  if (!dev) {
+    mainWindow.loadFile('./frontend/build/index.html');
+  } else {
+    mainWindow.loadURL('http://localhost:3535');
+  }
+  // ...
+}
 ```
+- Add file `polling-to-frontend.js` to have ability to check if `http://localhost:3535` available.
+- Add code to `main.js` _(WAY 1 should be replaced to WAY 2)_.
+```javascript
+const createPollingByConditions = require('./polling-to-frontend').createPollingByConditions;
+const CONFIG = {
+  FRONTEND_DEV_URL: 'http://localhost:3535',
+  FRONTEND_FIRST_CONNECT_INTERVAL: 4000,
+  FRONTERN_FIRST_CONNECT_METHOD: 'get'
+};
+let connectedToFrontend = false;
 
-Note: If you're using Linux Bash for Windows, [see this guide](https://www.howtogeek.com/261575/how-to-run-graphical-linux-desktop-applications-from-windows-10s-bash-shell/) or use `node` from the command prompt.
+// WAY 1: Without checking conditions.
+// This method will be called when Electron has finished
+// initialization and is ready to create browser windows.
+// Some APIs can only be used after this event occurs.
+// app.on('ready', createWindow);
 
-## Resources for Learning Electron
+// WAY 2: Need to check something conditions.
+// I'm gonna check if CONFIG.FRONTEND_DEV_URL resource available then create window...
+app.on('ready', () => {
+  if (dev) {
+    createPollingByConditions ({
+      url: CONFIG.FRONTEND_DEV_URL,
+      method: CONFIG.FRONTERN_FIRST_CONNECT_METHOD,
+      interval: CONFIG.FRONTEND_FIRST_CONNECT_INTERVAL,
+      callbackAsResolve: () => {
+        console.log(`SUCCESS! CONNECTED TO ${CONFIG.FRONTEND_DEV_URL}`);
+        connectedToFrontend = true;
 
-- [electronjs.org/docs](https://electronjs.org/docs) - all of Electron's documentation
-- [electronjs.org/community#boilerplates](https://electronjs.org/community#boilerplates) - sample starter apps created by the community
-- [electron/electron-quick-start](https://github.com/electron/electron-quick-start) - a very basic starter Electron app
-- [electron/simple-samples](https://github.com/electron/simple-samples) - small applications with ideas for taking them further
-- [electron/electron-api-demos](https://github.com/electron/electron-api-demos) - an Electron app that teaches you how to use Electron
-- [hokein/electron-sample-apps](https://github.com/hokein/electron-sample-apps) - small demo apps for the various Electron APIs
+        createWindow();
+      },
+      toBeOrNotToBe: () => !connectedToFrontend, // Need to reconnect again
+      callbackAsReject: () => {
+        console.log(`FUCKUP! ${CONFIG.FRONTEND_DEV_URL} IS NOT AVAILABLE YET!`);
+        console.log(`TRYING TO RECONNECT in ${CONFIG.FRONTEND_FIRST_CONNECT_INTERVAL / 1000} seconds...`);
+      }
+    });
+  } else {
+    createWindow();
+  }
+});
+```
+- Remove `renderer.js` and `index.html` from main directory.
 
-## License
-
-[CC0 1.0 (Public Domain)](LICENSE.md)
+**STEP 3:** Add some scripts to `package.json` if necessary.
