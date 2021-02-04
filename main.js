@@ -1,35 +1,36 @@
 // Modules to control application life and create native browser window
-const {app, BrowserWindow} = require('electron')
+const { app, BrowserWindow } = require('electron')
 const path = require('path')
 
 // --- Adds
-const isDev = process.env.NODE_ENV === 'development';
-const createPollingByConditions = require('./polling-to-frontend').createPollingByConditions;
+const isDev = process.env.NODE_ENV === 'development'
+const { createPollingByConditions } = require('./polling-to-frontend')
+
 const CONFIG = {
   FRONTEND_DEV_URL: 'http://localhost:3535',
   FRONTEND_FIRST_CONNECT_INTERVAL: 4000,
-  FRONTERN_FIRST_CONNECT_METHOD: 'get'
-};
-let connectedToFrontend = false;
+  FRONTERN_FIRST_CONNECT_METHOD: 'get',
+}
+let connectedToFrontend = false
 // ---
 
-function createWindow () {
+function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js')
-    }
+      preload: path.join(__dirname, 'preload.js'),
+    },
   })
 
   // and load the index.html of the app.
   // mainWindow.loadFile('index.html')
   if (!isDev) {
-    mainWindow.loadFile('./frontend/build/index.html');
+    mainWindow.loadFile('./frontend/build/index.html')
   } else {
-    mainWindow.loadURL(CONFIG.FRONTEND_DEV_URL);
-    mainWindow.webContents.openDevTools();
+    mainWindow.loadURL(CONFIG.FRONTEND_DEV_URL)
+    mainWindow.webContents.openDevTools()
   }
 
   // Open the DevTools.
@@ -45,27 +46,31 @@ app.whenReady().then(() => {
   // ---
   // WAY 2:
   if (isDev) {
-    createPollingByConditions ({
+    createPollingByConditions({
       url: CONFIG.FRONTEND_DEV_URL,
       method: CONFIG.FRONTERN_FIRST_CONNECT_METHOD,
       interval: CONFIG.FRONTEND_FIRST_CONNECT_INTERVAL,
       callbackAsResolve: () => {
-        console.log(`SUCCESS! CONNECTED TO ${CONFIG.FRONTEND_DEV_URL}`);
-        connectedToFrontend = true;
-        createWindow();
+        console.log(`SUCCESS! CONNECTED TO ${CONFIG.FRONTEND_DEV_URL}`)
+        connectedToFrontend = true
+        createWindow()
       },
       toBeOrNotToBe: () => !connectedToFrontend, // Need to reconnect again
       callbackAsReject: () => {
-        console.log(`FUCKUP! ${CONFIG.FRONTEND_DEV_URL} IS NOT AVAILABLE YET!`);
-        console.log(`TRYING TO RECONNECT in ${CONFIG.FRONTEND_FIRST_CONNECT_INTERVAL / 1000} seconds...`);
-      }
-    });
+        console.log(`FUCKUP! ${CONFIG.FRONTEND_DEV_URL} IS NOT AVAILABLE YET!`)
+        console.log(
+          `TRYING TO RECONNECT in ${
+            CONFIG.FRONTEND_FIRST_CONNECT_INTERVAL / 1000
+          } seconds...`
+        )
+      },
+    })
   } else {
-    createWindow();
+    createWindow()
   }
   // ---
-  
-  app.on('activate', function () {
+
+  app.on('activate', () => {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -75,7 +80,7 @@ app.whenReady().then(() => {
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
-app.on('window-all-closed', function () {
+app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
 
