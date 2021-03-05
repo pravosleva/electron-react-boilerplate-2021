@@ -61,20 +61,20 @@ function createWindow() {
   if (!dev) {
     mainWindow.loadFile('./frontend/build/index.html')
   } else {
-    mainWindow.loadURL('http://localhost:3535')
+    mainWindow.loadURL('http://localhost:3000')
   }
   // ...
 }
 ```
 
-- Add file `polling-to-frontend.js` to have ability to check if `http://localhost:3535` available.
+- Add file `polling-to-frontend.js` to have ability to check if `http://localhost:3000` available.
 - Add code to `main.js` _(WAY 1 should be replaced to WAY 2)_.
 
 ```javascript
 const createPollingByConditions = require('./polling-to-frontend')
   .createPollingByConditions
 const CONFIG = {
-  FRONTEND_DEV_URL: 'http://localhost:3535',
+  FRONTEND_DEV_URL: 'http://localhost:3000',
   FRONTEND_FIRST_CONNECT_INTERVAL: 4000,
   FRONTERN_FIRST_CONNECT_METHOD: 'get',
 }
