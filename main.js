@@ -7,7 +7,7 @@ const isDev = process.env.NODE_ENV === 'development'
 const { createPollingByConditions } = require('./polling-to-frontend')
 
 const CONFIG = {
-  FRONTEND_DEV_URL: 'http://localhost:3535',
+  FRONTEND_DEV_URL: 'http://localhost:3000',
   FRONTEND_FIRST_CONNECT_INTERVAL: 4000,
   FRONTERN_FIRST_CONNECT_METHOD: 'get',
 }
