@@ -58,7 +58,7 @@
     "prettier": "^2.2.1"
   },
   "dependencies": {
-    "axios": "^0.21.1",
+    "axios": "^0.24.0",
     "electron": "^11.2.2"
   }
 }
